@@ -10,8 +10,8 @@
 ;; -------------------------
 ;; State
 (defonce app-state (atom {:text "Hello, this is: "}))
-(defonce input (atom "
-Banana
+
+(defonce input (atom "Banana
 Fruit
 Apple
 Zebra
@@ -21,7 +21,20 @@ Fruit Salad
 Apple Pie
 "))
 
-(defonce func (atom #(identity %)))
+(defonce curfunc (atom #(identity %)))
+
+(def func-choices
+  (sorted-map
+   "echo" identity
+   "sort" pipes/sort
+   "uniq" pipes/uniq
+   "wc" pipes/wc))
+
+(defn choose-func
+  [x]
+  (func-choices
+   x
+   identity))
 
 (defn get-state [k & [default]]
   (clojure.core/get @app-state k default))
@@ -34,12 +47,10 @@ Apple Pie
 
 (defn func-input []
   [:div.text-input.box.left
-   [:h2 (str "Function")]
-   [:select :on-change #(print "changed!")
-    [:option "Identity"]
-    [:option "Sort"]
-    ]
-])
+   [:h2 "Function"]
+   [:select { :onChange #(reset! curfunc (choose-func (-> % .-target .-value))) }
+    (for [k (keys func-choices)]
+      [:option k])]])
 
 (defn text-input []
   [:div.text-input.box.left
@@ -49,7 +60,7 @@ Apple Pie
                :on-change #(reset! input (-> % .-target .-value))}]])
 
 (defn output []
-  (let [out (@func @input)]
+  (let [out (@curfunc @input)]
     [:div
      [:h2 "Output"]
      [:textarea {:value out
