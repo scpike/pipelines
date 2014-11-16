@@ -21,20 +21,7 @@ Fruit Salad
 Apple Pie
 "))
 
-(defonce curfunc (atom #(identity %)))
-
-(def func-choices
-  (sorted-map
-   "echo" identity
-   "sort" pipes/sort
-   "uniq" pipes/uniq
-   "wc" pipes/wc))
-
-(defn choose-func
-  [x]
-  (func-choices
-   x
-   identity))
+(defonce pipeline (atom ["echo"]))
 
 (defn get-state [k & [default]]
   (clojure.core/get @app-state k default))
@@ -45,11 +32,15 @@ Apple Pie
 (defn main-page []
   [:div [(get-state :current-page)]])
 
+(defn add-func-to-pipeline
+  [func]
+  (swap! pipeline #(conj % func)))
+
 (defn func-input []
   [:div.text-input.box.left
    [:h2 "Function"]
-   [:select { :onChange #(reset! curfunc (choose-func (-> % .-target .-value))) }
-    (for [k (keys func-choices)]
+   [:select { :onChange #(add-func-to-pipeline (-> % .-target .-value)) }
+    (for [k (keys pipes/func-choices)]
       [:option k])]])
 
 (defn text-input []
@@ -59,19 +50,29 @@ Apple Pie
                :style { :width "90%" :height "200px"  :overflow-y "scroll" }
                :on-change #(reset! input (-> % .-target .-value))}]])
 
-(defn output []
-  (let [out (@curfunc @input)]
-    [:div
-     [:h2 "Output"]
-     [:textarea {:value out
-                 :readOnly true
-                 :style { :width "90%" :height "200px" :overflow-y "scroll" }}]]))
+(defn results []
+  (let [in @input
+        p @pipeline]
+  [:div
+   [:h2 "Pipeline"]
+   (print p)
+   (print (partition 2 (interleave p (pipes/compute-pipeline p in))))
+   (for [piece (partition 2 (interleave p (pipes/compute-pipeline p in)))]
+     [:div
+      [:h3 (str (first piece))]
+      [:textarea {:value (last piece)
+                  :readOnly true
+                  :style { :width "90%" :height "200px" :overflow-y "scroll" }}]])]))
+
+(defn new-step []
+  [:div
+   [func-input]])
 
 (defn page1 []
   [:div
-   [func-input]
    [text-input]
-   [output]])
+   [results]
+   [new-step]])
 
 ;; -------------------------
 ;; Routes

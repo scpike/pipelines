@@ -20,9 +20,38 @@
   [x]
   (lines->str (dedupe (str->lines x))))
 
+(defn shuffle
+  [x]
+  (lines->str (clojure.core/shuffle (str->lines x))))
+
 (defn wc
   [x]
   (let [lines (count (str->lines x))
         chars (count x)
         words (count (clojure.string/split x #"\s+"))]
     (str lines "\t" words "\t" chars)))
+
+(def func-choices
+  (sorted-map
+   "echo" identity
+   "sort" sort
+   "uniq" uniq
+   "shuffle" shuffle
+   "wc" wc))
+
+(defn lookup-func
+  [x]
+  (func-choices
+   x
+   identity))
+
+(defn compute-pipeline
+  [funcs in]
+  (if (not-empty funcs)
+    (let [fn (lookup-func (first funcs))
+          r (fn in)]
+      (if (not-empty (rest funcs))
+        (cons r (compute-pipeline (rest funcs) r))
+        [r]
+        ))
+    []))
