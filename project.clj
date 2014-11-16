@@ -21,6 +21,7 @@
                  [ring/ring-defaults "0.1.2"]
                  [leiningen "2.5.0"]
                  [secretary "1.2.0"]
+                 [org.clojure/tools.cli "0.3.1"]
                  [prone "0.6.0"]]
 
   :plugins [[lein-cljsbuild "1.0.3"]
